@@ -1,0 +1,58 @@
+<html>
+    <head>
+
+    </head>
+    <title>
+
+    </title>
+    <body>
+        <div id="message-out">
+            {% for message in messages %}
+                <h1>{{ message.room.name }}</h1><br>
+                <p>{{ message.text_msg }}</p><br>
+                <p>{{ message.time_stamp }}</p>
+                <hr>
+            {% endfor %}
+        </div>
+
+        <form action="">
+            <input type="text" name="message" id="message"  placeholder="Enter your message...">
+            <hr>
+            <button id="send">Send message</button>
+        </form>
+    </body>
+    {{ room | json_script:'room-name' }}
+    <script>
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        const Chatsocket = new WebSocket(
+            'ws://'+window.location.host+'/ws/chat/'+roomName+'/'
+        );
+
+        Chatsocket.onmessage = function(e){
+            console.log('connection created...')
+            const data = JSON.parse(e.data);
+
+            if (data.message) {
+                let msgDom = '<div><h1>'+data.room+'</h1><br><p>'+data.message+'</p></div>';
+                document.querySelector('#message-out').innerHTML += msgDom;
+            } else{
+                alert('There is no message...');
+            }
+        }
+
+        //sending the message
+        document.querySelector('#send').onclick = function (e) {
+            e.preventDefault();
+            const InputMessageDom = document.querySelector('#message');
+            const MessageInput = InputMessageDom.value;
+            Chatsocket.send(JSON.stringify({
+                'message': MessageInput,
+                'room' : roomName
+            }));
+
+            InputMessageDom.value = '';
+
+            return false;
+        }
+    </script>
+</html>
